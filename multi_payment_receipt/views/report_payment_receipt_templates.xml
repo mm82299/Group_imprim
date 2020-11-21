@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_payment_receipt_document_main">
+        <t t-call="web.external_layout">
+            <t t-set="first" t-value="first.with_context(lang=lang)"/>
+            <div class="page">
+                <h3><strong>Payment Receipt: <span t-field="first.name"/></strong></h3>
+                <div class="row">
+                    <div class="col-6" t-if="first.partner_type">
+                        <t t-if="first.partner_type == 'customer'">
+                            <strong>Customer: </strong>
+                        </t>
+                        <t t-if="first.partner_type == 'supplier'">
+                            <strong>Vendor: </strong>
+                        </t><span t-field="first.partner_id"/>
+                    </div>
+
+                </div>
+
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th><span>Date de paiement</span></th>
+                            <th><span>Méthode de paiement</span></th>
+                            <th><span>Montant</span></th>
+                            <th class="text-right"><span>Mémo</span></th>
+
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="docs" t-as="o">
+                            <td><span t-field="o.payment_date"/></td>
+                            <td><span t-field="o.payment_method_id.name"/></td>
+                            <td><span t-field="o.amount" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/></td>
+                            <td class="text-right"><span t-field="o.communication"/></td>
+
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="clearfix">
+                        <div id="total" class="row">
+                            <div t-attf-class="#{'col-4' if report_type != 'html' else 'col-sm-7 col-md-5'} ml-auto">
+                                <table class="table table-sm;page-break-inside: avoid;">
+
+                                    <tr class="border-black o_total">
+                                        <td><strong>Montant total</strong></td>
+                                        <td class="text-right">
+                                            <span t-esc="amount_total"/>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="report_multi_payment_receipt" name="Multi Payment Receipts"
+              inherit_id="account.report_payment_receipt">
+        <xpath expr="/t" position="replace">
+            <t t-call="web.html_container">
+                <t t-set="partner_ids" t-value="docs.mapped('partner_id')"/>
+                <t t-if="partner_ids.ids.count(partner_ids.ids[0]) == len(partner_ids.ids)">
+
+                    <t t-set="first" t-value="docs[0]"/>
+                        <t t-set="lang" t-value="first.partner_id.lang"/>
+                    <t t-set="docs" t-value="docs"/>
+                    <t t-set="amount_total" t-value="sum(docs.mapped('amount'))"/>
+                    <t t-call="multi_payment_receipt.report_payment_receipt_document_main" t-lang="lang"/>
+
+                </t>
+                <t t-else="">
+                    <t t-foreach="docs" t-as="o">
+                        <t t-set="lang" t-value="o.partner_id.lang"/>
+                        <t t-call="account.report_payment_receipt_document" t-lang="lang"/>
+                    </t>
+                </t>
+            </t>
+        </xpath>
+    </template>
+
+
+</odoo>
